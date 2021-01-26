@@ -7,31 +7,28 @@ connection = sqlite3.connect("data.db")
 args = sys.argv
 
 def write_file(todo):
+    number = 1
+    status = 1
     try:
-        with open(file_name, "r") as f:
-            f = f.readlines()
-            lines=[]
-            if len(f) > 0:
-                for line in f:
-                    lines.append(line)
-            new_line= "[ ] " + todo + "\n"  
-            lines.append(new_line)
-        with open(file_name, "w") as nf:
-            nf.writelines(lines)
+        with connection as con:
+            cur = con.cursor()
+            cur.execute("INSERT INTO todo VALUES (?, ?, ?);", (number, status, todo))
+            
+        
     except IOError:
-        print("Unable to write file: ", f)
+        print("Unable to open database")
 
 def read_file():
+    
     try:
-        with open(file_name, "r") as f:
-            f = f.readlines()
-            if len(f) == 0:
-                print("No todos for today! :)")
-            else:
-                for i, line in enumerate(f):
-                    print(str(i+1) + " - " + line, end= "")   
+        with connection as con:
+            cur = con.cursor()
+            rows = cur.execute("SELECT todo_number, todo_status, todo_text FROM todo").fetchall()
+            for i in rows:
+                print(i) 
+
     except IOError:
-        print("Unable to write file: ", f)
+        print("Unable to open database")
 
 def remove_task(num1):
     pass
@@ -43,7 +40,6 @@ def read_undone():
 
 def delete_all():
     pass
-
 
 
 def remove_done_task():
@@ -59,7 +55,7 @@ def todo(args):
     + colored( "    -d   Deletes all task", 'red'))
     
     cursor = connection.cursor()
-    cursor.execute("CREATE TABLE todo (todo_number INTEGER, todo_status INTEGER, todo_ TEXT)")
+    cursor.execute("CREATE TABLE if not exists todo (todo_number INTEGER, todo_status INTEGER, todo_text TEXT)")
 
 #if no arguments the basic message
     if len(args) == 1:
