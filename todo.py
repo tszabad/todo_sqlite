@@ -7,26 +7,30 @@ connection = sqlite3.connect("data.db")
 args = sys.argv
 
 def write_file(todo):
-    number = 1
     status = 1
     try:
         with connection as con:
             cur = con.cursor()
+            last = cur.execute("SELECT todo_number FROM todo ORDER BY todo_number DESC LIMIT 1").fetchone()
+            print(last)
+            if len(last) == 0:
+                number = 1
+            else:
+                number = last[0] + 1
             cur.execute("INSERT INTO todo VALUES (?, ?, ?);", (number, status, todo))
-            
-        
     except IOError:
         print("Unable to open database")
 
 def read_file():
-    
+    done = "[x]"
+    undone = "[ ]"
     try:
         with connection as con:
             cur = con.cursor()
             rows = cur.execute("SELECT todo_number, todo_status, todo_text FROM todo").fetchall()
             for i in rows:
-                print(i) 
-
+                symbol = undone if i[1] == 1 else done
+                print("No: "+ str(i[0]) + " " + str(symbol) + " --- " + str(i[2])) 
     except IOError:
         print("Unable to open database")
 
@@ -34,12 +38,31 @@ def remove_task(num1):
     pass
 
 def check_task(num2):
-    pass
+    done = "[x]"
+    undone = "[ ]"
+    try:
+        with connection as con:
+            cur = con.cursor()
+            cur.execute("UPDATE todo SET todo_status = ? WHERE todo_number = ?", (0,num2))
+            rows = cur.execute("SELECT todo_number, todo_status, todo_text FROM todo").fetchall()
+            for i in rows:
+                symbol = undone if i[1] == 1 else done
+                print("No: "+ str(i[0]) + " " + str(symbol) + " --- " + str(i[2])) 
+
+    except IOError:
+        print("Unable to open database")
+
 def read_undone():
     pass
 
 def delete_all():
-    pass
+    try:
+        with connection as con:
+            cur = con.cursor()
+            cur.execute("DELETE from todo")
+
+    except IOError:
+        print("Unable to open database")
 
 
 def remove_done_task():
