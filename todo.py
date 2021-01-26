@@ -12,8 +12,7 @@ def write_file(todo):
         with connection as con:
             cur = con.cursor()
             last = cur.execute("SELECT todo_number FROM todo ORDER BY todo_number DESC LIMIT 1").fetchone()
-            print(last)
-            if len(last) == 0:
+            if last is None:
                 number = 1
             else:
                 number = last[0] + 1
@@ -35,7 +34,14 @@ def read_file():
         print("Unable to open database")
 
 def remove_task(num1):
-    pass
+    try:
+        with connection as con:
+            cur = con.cursor()
+            cur.execute("DELETE FROM todo WHERE todo_number = ? ", (num1,))
+
+    except IOError:
+        print("Unable to open database")
+
 
 def check_task(num2):
     done = "[x]"
@@ -53,7 +59,17 @@ def check_task(num2):
         print("Unable to open database")
 
 def read_undone():
-    pass
+    done = "[x]"
+    undone = "[ ]"
+    try:
+        with connection as con:
+            cur = con.cursor()
+            rows = cur.execute("SELECT todo_number, todo_status, todo_text FROM todo WHERE todo_status = 1").fetchall()
+            for i in rows:
+                symbol = undone if i[1] == 1 else done
+                print("No: "+ str(i[0]) + " " + str(symbol) + " --- " + str(i[2])) 
+    except IOError:
+        print("Unable to open database")
 
 def delete_all():
     try:
@@ -65,16 +81,14 @@ def delete_all():
         print("Unable to open database")
 
 
-def remove_done_task():
-    pass
 
 def todo(args):
-    commands= ["-la", "-a" , "-r", "-c", "-l", "-d", "-am", "-dd"]
+    commands= ["-la", "-a" , "-r", "-c", "-l", "-d"]
     
     start_message = ("Command Line Todo application\n" + "=============================\n" 
     + "Command line arguments:\n" + "    -la  Lists all the tasks\n" +  "    -l   Lists all undone tasks\n" 
     + "    -a   Adds a new task\n" + "    -r   Removes a task\n" 
-    + "    -c   Completes a task\n" +"    -am  Adds multiple new tasks\n" + colored( "    -dd  Deletes all done tasks\n", 'red')
+    + "    -c   Completes a task\n" 
     + colored( "    -d   Deletes all task", 'red'))
     
     cursor = connection.cursor()
@@ -131,8 +145,6 @@ def todo(args):
         delete_all()
 
 
-#delete done tasks
-    elif len(args) == 2 and args[1] == commands[7]:
-        remove_done_task()
+
 
 todo(args)
